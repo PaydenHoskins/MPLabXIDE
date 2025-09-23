@@ -63,7 +63,7 @@ START:
     ClRF    ANSELH	;Set input to Digital
     CLRF    ANSEL	;Sets inputs to digital
     CLRF    INTCON	;Contrids Interupt
-    MOVLW   0xF0	;LSB are inputs
+    MOVLW   0xF0	;LSB are outputs
     MOVWF   TRISB	;Set Pins to Inputs
     CLRF    OPTION_REG
     BSF	    OPTION_REG,7
@@ -87,69 +87,72 @@ Main:
     ;ROW1
     MOVLW   0x08
     MOVWF   PORTB
-    MOVLW   0xAA
-    BTFSC   PORTB,4
+    MOVLW   0x44
+    BTFSC   PORTB,7
     GOTO    DOSTUFF
-    MOVLW   0xB0
-    BTFSC   PORTB,5
-    GOTO    DOSTUFF
-    MOVLW   0xA3
+    MOVLW   0x23
     BTFSC   PORTB,6
     GOTO    DOSTUFF
-    MOVLW   0xC4
-    BTFSC   PORTB,7
+    MOVLW   0x30
+    BTFSC   PORTB,5
+    GOTO    DOSTUFF
+    MOVLW   0x2A
+    BTFSC   PORTB,4
     GOTO    DOSTUFF
     ;ROW2
     MOVLW   0x04
     MOVWF   PORTB
-    MOVLW   0xB7
-    BTFSC   PORTB,4
+    MOVLW   0x43
+    BTFSC   PORTB,7
     GOTO    DOSTUFF
-    MOVLW   0xB8
-    BTFSC   PORTB,5
-    GOTO    DOSTUFF
-    MOVLW   0xB9
+    MOVLW   0x39
     BTFSC   PORTB,6
     GOTO    DOSTUFF
-    MOVLW   0xC3
-    BTFSC   PORTB,7
+    MOVLW   0x38
+    BTFSC   PORTB,5
+    GOTO    DOSTUFF
+    MOVLW   0x37
+    BTFSC   PORTB,4
     GOTO    DOSTUFF
     ;ROW3
     MOVLW   0x02
     MOVWF   PORTB
-    MOVLW   0xB4
-    BTFSC   PORTB,4
+    MOVLW   0x42
+    BTFSC   PORTB,7
     GOTO    DOSTUFF
-    MOVLW   0xB5
-    BTFSC   PORTB,5
-    GOTO    DOSTUFF
-    MOVLW   0xB6
+    MOVLW   0x36
     BTFSC   PORTB,6
     GOTO    DOSTUFF
-    MOVLW   0xC2
-    BTFSC   PORTB,7
+    MOVLW   0x35
+    BTFSC   PORTB,5
+    GOTO    DOSTUFF
+    MOVLW   0x34
+    BTFSC   PORTB,4
     GOTO    DOSTUFF
     ;ROW4
     MOVLW   0x01
     MOVWF   PORTB
-    MOVLW   0xB1
-    BTFSC   PORTB,4
-    GOTO    DOSTUFF
-    MOVLW   0xB2
-    BTFSC   PORTB,5
-    GOTO    DOSTUFF
-    MOVLW   0xB3
-    BTFSC   PORTB,6
-    GOTO    DOSTUFF
-    MOVLW   0xC1
+    MOVLW   0x41
     BTFSC   PORTB,7
     GOTO    DOSTUFF
+    MOVLW   0x33
+    BTFSC   PORTB,6
+    GOTO    DOSTUFF
+    MOVLW   0x32
+    BTFSC   PORTB,5
+    GOTO    DOSTUFF
+    MOVLW   0x31
+    BTFSC   PORTB,4
+    GOTO    DOSTUFF 
+    CLRF    PORTB
     MOVLW   0xFF
     GOTO    DOSTUFF
     GOTO Main
     
 DOSTUFF:
-    MOVWF PORTC
+    BCF	    PORTC,7
+    MOVWF   PORTC
+    BSF	    PORTC,7
     GOTO Main
     
 END

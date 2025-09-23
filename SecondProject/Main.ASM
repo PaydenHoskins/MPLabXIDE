@@ -54,6 +54,30 @@ START:
     CLRF    CCP1CON
     CLRF    CCP2CON
     CLRF    PORTC
+    ;PORTB
+    ;BANK3
+    BSF	0x03,5
+    BSF	0x03,6 
+    ClRF    ANSELH	;Set input to Digital
+    CLRF    ANSEL	;Sets inputs to digital
+    CLRF    INTCON	;Contrids Interupt
+    MOVLW   0xF0	;LSB are outputs
+    MOVWF   TRISB	;Set Pins to Inputs
+    CLRF    OPTION_REG
+    BSF	    OPTION_REG,7
+   ;BANK1
+    BSF	0x03,5
+    BCF	0x03,6
+    CLRF   WPUB 
+    CLRF   IOCB		;Disables interrupton
+    ;BANK2
+    BCF	0x03,5
+    BSF	0x03,6
+    CLRF    CM2CON1	;Sets all bits to 0
+    ;BANK0
+    BCF	0x03,5
+    BCF	0x03,6
+    CLRF    CCP1CON
  ;PORTB
    ;BANK1
     BSF	0x03,5

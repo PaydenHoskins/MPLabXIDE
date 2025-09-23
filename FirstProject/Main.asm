@@ -79,10 +79,11 @@ START:
     BCF	0x03,6
     CLRF   0x95    
     
-;Main program loop (runs forever)
-MainLoop:
     BCF	0x03,5
     BCF	0x03,6  ;select bank 0
+    
+;Main program loop (runs forever)
+MainLoop:
     INCF    0x06, 1
     GOTO MainLoop
     

@@ -6,7 +6,7 @@ Linker command line:
   --edf=C:\Program Files\Microchip\xc8\v3.10\pic\dat\20250813170317_en.msgs \
   -cs -h+dist/default/debug\Project2Lab3.1.X.debug.sym \
   --cmf=dist/default/debug\Project2Lab3.1.X.debug.cmf -z -Q16F883 \
-  -oC:\Users\payde\AppData\Local\Temp\xcAsqr4.0\driver_tmp_3.o \
+  -oC:\Users\payde\AppData\Local\Temp\xcAsffs.0\driver_tmp_3.o \
   --fixupoverflow=error -ver=XC8 PIC(R) Assembler --fixupoverflow=lstwarn \
   -Mdist/default/debug/Project2Lab3.1.X.debug.map -E1 -ACODE=00h-07FFhx2 \
   -ASTRCODE=00h-0FFFh -ASTRING=00h-0FFhx16 -ACONST=00h-0FFhx16 \
@@ -28,13 +28,13 @@ Machine type is 16F883
                 Name                               Link     Load   Length Selector   Space Scale
 build/default/debug/_ext/1472/Main.o
                 config                             2007     2007        2        0       4
-                restVect                            79F      79F        1      F3E       0
-                code                                7A0      7A0       60      F40       0
+                restVect                            79C      79C        1      F38       0
+                code                                79D      79D       63      F3A       0
 
 TOTAL           Name                               Link     Load   Length     Space
         CLASS   CODE           
-                restVect                            79F      79F        1         0
-                code                                7A0      7A0       60         0
+                restVect                            79C      79C        1         0
+                code                                79D      79D       63         0
 
         CLASS   STRCODE        
 
@@ -75,8 +75,8 @@ TOTAL           Name                               Link     Load   Length     Sp
 
 SEGMENTS        Name                           Load    Length   Top    Selector   Space  Class     Delta
 
-                restVect                       00079F  000001  0007A0       F3E       0  CODE        2
-                code                           0007A0  000060  000800       F40       0  CODE        2
+                restVect                       00079C  000001  00079D       F38       0  CODE        2
+                code                           00079D  000063  000800       F3A       0  CODE        2
 
 
 UNUSED ADDRESS RANGES
@@ -85,13 +85,13 @@ UNUSED ADDRESS RANGES
         BANK0            0020-006F             50           1
         BANK1            00A0-00EF             50           1
         BANK2            0120-016F             50           1
-        CODE             0000-079E            79F           2
+        CODE             0000-079B            79C           2
                          0800-0FFF            800
         COMMON           0070-007F             10           1
-        CONST            0000-079E            100           2
+        CONST            0000-079B            100           2
                          0800-0FFF            100
         EEDATA           2100-21FF            100           2
-        ENTRY            0000-079E            100           2
+        ENTRY            0000-079B            100           2
                          0800-0FFF            100
         IDLOC            2000-2003              4           2
         RAM              0020-006F             50           1
@@ -101,9 +101,9 @@ UNUSED ADDRESS RANGES
         SFR1             0080-009F             20           1
         SFR2             0100-011F             20           1
         SFR3             0180-01EF             70           1
-        STRCODE          0000-079E            79F           2
+        STRCODE          0000-079B            79C           2
                          0800-0FFF            800
-        STRING           0000-079E            100           2
+        STRING           0000-079B            100           2
                          0800-0FFF            100
 
                                   Symbol Table
