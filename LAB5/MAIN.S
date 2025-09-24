@@ -165,98 +165,98 @@ PSECT code,class=CODE,delta=2
     
 DOSTUFF:
    ADDWF    PCL,1
-;NOTE1
-    MOVLW   0x34	;27	
-    MOVWF   COUNT3	
-    CALL    SHITLOOP
-    CALL    NOTE
-    RETURN
-;NOTE2
-    MOVLW   0x3A	;27	
-    MOVWF   COUNT3	
-    CALL    SHITLOOP
-    CALL    NOTE
-    RETURN
-;NOTE3
-    MOVLW   0x43	;27	
-    MOVWF   COUNT3	
-    CALL    SHITLOOP
-    CALL    NOTE
-    RETURN
-;NOTE4
-    MOVLW   0x4B	;27	
-    MOVWF   COUNT3	
-    CALL    SHITLOOP
-    CALL    NOTE
-    RETURN
-;NOTE5
-    MOVLW   0x54	;27	
-    MOVWF   COUNT3	
-    CALL    SHITLOOP
-    CALL    NOTE
-    RETURN
-;NOTE6
-    MOVLW   0x5F	;27	
-    MOVWF   COUNT3	
-    CALL    SHITLOOP
-    CALL    NOTE
-    RETURN
-;NOTE7
-    MOVLW   0x66	;27	
-    MOVWF   COUNT3	
-    CALL    SHITLOOP
-    CALL    NOTE
-    RETURN
-;NOTE8
-    MOVLW   0x71	;27	
-    MOVWF   COUNT3	
-    CALL    SHITLOOP
-    CALL    NOTE
-    RETURN
-;NOTE9
-    MOVLW   0x7E	;27	
-    MOVWF   COUNT3	
-    CALL    SHITLOOP
-    CALL    NOTE
-    RETURN
-;NOTE10
-    MOVLW   0x87	;27	
-    MOVWF   COUNT3	
-    CALL    SHITLOOP
-    CALL    NOTE
-    RETURN
-;NOTE11
-    MOVLW   0x97	;27	
-    MOVWF   COUNT3	
-    CALL    SHITLOOP
-    CALL    NOTE
-    RETURN
-;NOTE12
-    MOVLW   0xAA	;27	
-    MOVWF   COUNT3	
-    CALL    SHITLOOP
-    CALL    NOTE
-    RETURN
-;NOTE13
-    MOVLW   0xBF	;27	
-    MOVWF   COUNT3	
-    CALL    SHITLOOP
-    CALL    NOTE
-    RETURN
-;NOTE14
-    MOVLW   0xCA	;27	
+;NOTE16
+    MOVLW   0x34   ;27	
     MOVWF   COUNT3	
     CALL    SHITLOOP
     CALL    NOTE
     RETURN
 ;NOTE15
-    MOVLW   0xDF	;27	
+    MOVLW   0x3B	;27	
     MOVWF   COUNT3	
     CALL    SHITLOOP
     CALL    NOTE
     RETURN
-;NOTE16
-    MOVLW   0xFE	;27	
+;NOTE14
+    MOVLW   0x3E	;27	
+    MOVWF   COUNT3	
+    CALL    SHITLOOP
+    CALL    NOTE
+    RETURN
+;NOTE13
+    MOVLW   0x47	;27	
+    MOVWF   COUNT3	
+    CALL    SHITLOOP
+    CALL    NOTE
+    RETURN
+;NOTE12
+    MOVLW   0x50	;27	
+    MOVWF   COUNT3	
+    CALL    SHITLOOP
+    CALL    NOTE
+    RETURN
+;NOTE11
+    MOVLW   0x5A	;27	
+    MOVWF   COUNT3	
+    CALL    SHITLOOP
+    CALL    NOTE
+    RETURN
+;NOTE10
+    MOVLW   0x60	;27	
+    MOVWF   COUNT3	
+    CALL    SHITLOOP
+    CALL    NOTE
+    RETURN
+;NOTE9
+    MOVLW   0x6E	;27	
+    MOVWF   COUNT3	
+    CALL    SHITLOOP
+    CALL    NOTE
+    RETURN
+;NOTE8
+    MOVLW   0x7A	;27	
+    MOVWF   COUNT3	
+    CALL    SHITLOOP
+    CALL    NOTE
+    RETURN
+;NOTE7
+    MOVLW   0x82	;27	
+    MOVWF   COUNT3	
+    CALL    SHITLOOP
+    CALL    NOTE
+    RETURN
+;NOTE6
+    MOVLW   0x93	;27	
+    MOVWF   COUNT3	
+    CALL    SHITLOOP
+    CALL    NOTE
+    RETURN
+;NOTE5
+    MOVLW   0xA6	;27	
+    MOVWF   COUNT3	
+    CALL    SHITLOOP
+    CALL    NOTE
+    RETURN
+;NOTE4
+    MOVLW   0xBB	;27	
+    MOVWF   COUNT3	
+    CALL    SHITLOOP
+    CALL    NOTE
+    RETURN
+;NOTE3
+    MOVLW   0xC7	;27	
+    MOVWF   COUNT3	
+    CALL    SHITLOOP
+    CALL    NOTE
+    RETURN
+;NOTE2
+    MOVLW   0xDE	;27	
+    MOVWF   COUNT3	
+    CALL    SHITLOOP
+    CALL    NOTE
+    RETURN
+;NOTE1
+    MOVLW   0xFC	;27	
     MOVWF   COUNT3	
     CALL    SHITLOOP
     CALL    NOTE
