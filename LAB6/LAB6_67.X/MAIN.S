@@ -35,8 +35,6 @@ PSECT resetVect,class=CODE,delta=2
     GOTO START
     
 PSECT isrVect,class=CODE,delta=2
-    MOVWF   W_SAVE
-    MOVF    OPTION_REG, 0
     CALL INTERUPT
     RETFIE
     
@@ -68,9 +66,10 @@ START:
     BSF	0x03,6 
     ClRF    ANSELH	;Set input to Digital
     CLRF    ANSEL	;Sets inputs to digital
-    MOVLW   0x90	;Set GIE on and INTE on
-    MOVWF    INTCON	;Contrids Interupt
-    MOVLW   0x01	;ALL PINS are outputs
+    MOVLW   0xC8	;Set GIE on and INTE on
+    MOVWF   INTCON	;Contrids Interupt
+    BCF	    INTCON, 0
+    MOVLW   0x03	;ALL PINS are outputs
     MOVWF   TRISB	;Sets ALL PINS to output
     MOVLW   0xC0	;Sets falling edge INT, and no pull up
     CLRF    OPTION_REG
@@ -79,6 +78,8 @@ START:
     BCF	0x03,6
     CLRF   WPUB 
     CLRF   IOCB		;Disables interrupton
+    BSF	   IOCB, 1
+    BSF	   IOCB, 0
   ;BANK2
     BCF	0x03,5
     BSF	0x03,6
@@ -86,32 +87,97 @@ START:
   ;BANK0
     BCF	0x03,5
     BCF	0x03,6
+    CLRF    PORTB
     CLRF    CCP1CON
+    W7_SAVE	EQU 0x20	;for main loop W
+    OPT7_SAVE	EQU 0x21    ;for main loop 
+    W6_SAVE	EQU 0x26    ;6 interupt save
+    OPT6_SAVE   EQU 0x27
+    COUNT1	EQU 0x22
+    COUNT2	EQU 0x23
+    COUNT3	EQU 0x24
+    COUNT4	EQU 0x25
+    COUNT1_SAVE	EQU 0x28
+    COUNT2_SAVE	EQU 0x29
+    COUNT3_SAVE	EQU 0x2A
+    COUNT4_SAVE	EQU 0x2B
+    DISPLAY1_SAVE EQU 0x2C
+    DISPLAY6_SAVE EQU 0x2D
     GOTO    MAIN
-    W_SAVE  EQU	0x20
-    OPT_SAVE	EQU 0x21
-    COUNT1  EQU  0x22
-    COUNT2  EQU	 0x23
-    COUNT3  EQU	 0x24
-    COUNT4  EQU	 0x25
-	
+
 MAIN:
     MOVLW   0x31
     MOVWF   PORTC
     GOTO MAIN
     
 INTERUPT:
-    MOVWF   OPT_SAVE
+    BTFSS   PORTB, 0
+    GOTO    DISPLAY7
+    BTFSS   PORTB, 1
+    GOTO    DISPLAY6
+LEAVE:    
+    RETURN
+
+DISPLAY7:
+    MOVWF   W7_SAVE
+    MOVF    OPTION_REG, 0
+    MOVWF   OPT7_SAVE
+    MOVF    COUNT1, 0
+    MOVWF   COUNT1_SAVE
+    MOVF    COUNT2, 0
+    MOVWF   COUNT2_SAVE
+    MOVF    COUNT3, 0
+    MOVWF   COUNT3_SAVE
+    MOVF    COUNT4, 0
+    MOVWF   COUNT4_SAVE
     MOVLW   0x37
     MOVWF   PORTC
-    CALL    DELAY
-    MOVF    OPT_SAVE, 0
+    CALL    DELAY 
+    MOVF    COUNT1_SAVE, 0
+    MOVWF   COUNT1
+    MOVF    COUNT2_SAVE, 0
+    MOVWF   COUNT2
+    MOVF    COUNT3_SAVE, 0
+    MOVWF   COUNT3
+    MOVF    COUNT4_SAVE, 0
+    MOVWF   COUNT4
+    MOVF    OPT7_SAVE, 0
+    MOVF    DISPLAY1_SAVE, 0
+    MOVWF   PORTC
     MOVWF   OPTION_REG
-    MOVF    W_SAVE, 0
-    BCF	    INTCON, 1
-    RETURN
+    MOVF    W7_SAVE, 0
+    BCF	    INTCON, 0
+    GOTO    LEAVE
     
-     DELAY:
+DISPLAY6:
+    MOVWF   W6_SAVE
+    MOVF    OPTION_REG, 0
+    MOVWF   OPT6_SAVE
+    BSF	STATUS, 5
+    BCF	STATUS, 6
+    BCF	    IOCB, 1
+    BCF	STATUS, 5
+    BCF	STATUS, 6
+    BCF	    INTCON, 0
+    BSF	    INTCON, 7
+    MOVLW   0x36
+    MOVWF   DISPLAY1_SAVE
+    MOVWF   PORTC
+    CALL    DELAY
+    BSF	STATUS, 5
+    BCF	STATUS, 6
+    BSF	    IOCB, 1
+    BCF	STATUS, 5
+    BCF	STATUS, 6
+    MOVF    OPT6_SAVE, 0
+    MOVWF   OPTION_REG
+    MOVF    W6_SAVE, 0
+    BCF	    INTCON, 0
+    GOTO    LEAVE
+    
+DELAY:
+    BCF	STATUS, 5
+    BCF	STATUS, 6
     	MOVLW	0x0B	;11	
 	MOVWF	COUNT3	
     LOOP3:
@@ -137,4 +203,8 @@ INTERUPT:
     FUDGE:
 	DECFSZ	COUNT4	;+1(2)
 	GOTO	FUDGE
-	RETURN
+    RETURN
+	
+    
+	
+END
