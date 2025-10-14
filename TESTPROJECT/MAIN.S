@@ -1,8 +1,8 @@
 ;Header
     ;Payden Hoskins
     ;RCET3375
-    ;TEST_FILE
-    ;09/15/25
+    ;LAB6
+    ;09/25/25
     ;-------------------------------------------------------------------------------
 ;Configuration
  ; CONFIG1
@@ -24,51 +24,129 @@
 // config statements should precede project file includes.
   ;Include Statments
 #include <xc.inc>
-#include <pic16f883.inc>    ;INCLUDE pic status calls
+#include <pic16f883.inc>
 ;Code Section
+
 ;-------------------------------------------------------------------------------
 ;Register/Variable setup
 SOMEVALUE EQU 0x5f ; asign a value to a  variable
     
-;Start of Program
+    ;Start of Program
 PSECT resetVect,class=CODE,delta=2
-    GOTO START
+GOTO START
     
 PSECT isrVect,class=CODE,delta=2
-    ;GOTO ISR_Handler
-    RETFIE
+GOTO INTERUPT
     
 PSECT code,class=CODE,delta=2
-;Setup code that runs once at power up/ reset
  
+    ;PORT SETUP
 START:
-    ;PORTB
-    ;BANK3
-    BSF	STATUS,5
-    BSF	STATUS,6 
-    ClRF    ANSELH	;Set input to Digital
-    CLRF    ANSEL	;Sets inputs to digital
-    CLRF    INTCON	;Contrids Interupt
-    MOVLW   0x00	;Sets outputs
-    MOVWF   TRISB	;Set Pins to outputs
-    CLRF    OPTION_REG
-    BSF	    OPTION_REG,7
-   ;BANK1
-    BSF	STATUS,5
-    BCF	STATUS,6
-    CLRF   WPUB 
-    CLRF   IOCB		;Disables interrupton
-    ;BANK2
-    BCF	STATUS,5
-    BSF	STATUS,6
-    CLRF    CM2CON1	;Sets all bits to 0
-    ;BANK0
-    BCF	STATUS,5
-    BCF	STATUS,6
-    CLRF    CCP1CON
     
-MAIN:
-    INCF    PORTB,1
-    GOTO    MAIN
+; BANK1: TRIS setup
+BSF     STATUS,5
+BCF     STATUS,6
+CLRF    PSTRCON
+MOVLW   0xFF         ; all PORTB = inputs
+MOVWF   TRISB
+CLRF    TRISC        ; all PORTC = outputs
+MOVLW   0x03
+MOVWF   WPUB
+MOVWF   IOCB    
+
+; BANK0: clear peripherals + I/O
+BCF     STATUS,5
+BCF     STATUS,6
+CLRF    SSPCON
+CLRF    RCSTA
+CLRF    T1CON
+CLRF    CCP1CON
+CLRF    CCP2CON
+CLRF    PORTB
+CLRF    PORTC
+
+; BANK2: disable comparators
+BSF     STATUS,6
+CLRF    CM2CON1
+BCF     STATUS,6     ; back to Bank0
+
+; BANK3: digital mode
+BSF     STATUS,5
+BSF     STATUS,6    
+CLRF    ANSELH
+CLRF    ANSEL    
+
+; BANK0: OPTION + interrupts
+BCF     STATUS,5
+BCF     STATUS,6
+MOVLW   0x00
+MOVWF   OPTION_REG
+MOVLW   0x88
+MOVWF   INTCON
+BCF     INTCON,0     ; clear RBIF
+
+    GOTO    MAINLOOP
     
+    COUNT1	EQU 0x22
+    COUNT2	EQU 0x23
+    COUNT3	EQU 0x24
+    COUNT4	EQU 0x25
+    
+MAINLOOP:
+    MOVLW   0x31
+    MOVWF   PORTC
+    CALL    DELAY
+    GOTO    MAINLOOP
+
+    
+INTERUPT:
+    BTFSS   PORTB,0
+    GOTO    DISPLAY
+    BTFSS   PORTB,1
+    GOTO    DISPLAY1
+
+DISPLAY:
+    MOVLW   0x37
+    MOVWF   PORTC 
+    CALL    DELAY
+    BCF	    INTCON,0
+    RETFIE
+    
+DISPLAY1:
+    MOVLW   0x36
+    MOVWF   PORTC 
+    CALL    DELAY
+    BCF	    INTCON,0
+    RETFIE
+    
+    
+    DELAY:
+    BCF	STATUS, 5
+    BCF	STATUS, 6
+    	MOVLW	0x0B	;11	
+	MOVWF	COUNT3	
+    LOOP3:
+	MOVLW	0xED	;185
+	MOVWF	COUNT2
+    LOOP2:
+	MOVLW	0xFF	;32
+	MOVWF	COUNT1
+    LOOP1:
+	DECFSZ	COUNT1	;+1(2)
+	GOTO	LOOP1	;+2
+	DECFSZ	COUNT2	;+1(2)
+	GOTO	LOOP2	;+2
+	NOP		;+1
+	NOP		;+1
+	NOP		;+1
+	NOP		;+1
+	DECFSZ	COUNT3	;+1(2)
+	GOTO	LOOP3	;+2
+	
+	MOVLW	0x5E	;94	
+	MOVWF	COUNT4
+    FUDGE:
+	DECFSZ	COUNT4	;+1(2)
+	GOTO	FUDGE
+    RETURN
 END
