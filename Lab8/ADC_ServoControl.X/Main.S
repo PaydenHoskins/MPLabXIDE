@@ -31,6 +31,7 @@
     ADRESH_SAVE EQU 0x20
     COUNT1 EQU	0x21
     COUNT2 EQU	0x22
+    PCL_ADD EQU	0x23
  
     ;Start of Program
     PSECT resetVect,class=CODE,delta=2
@@ -101,17 +102,15 @@ START:
     BSF	    ADCON0,1
     BSF	    ADCON0,0
     MOVF    ADRESH,0
-    BCF	PORTC,0
+    BCF	    PORTC,0
     GOTO    MAIN
     
     INTERRUPT:
     CLRF    PIR1
     BSF	    PORTC,0
-    MOVLW   155	
-    BTFSC   PORTB,1
-    MOVLW   0xF7
-    BTFSC   PORTB,0
-    MOVLW   55
+    MOVF    ADRESH,0
+    MOVWF   ADRESH_SAVE
+    CALL    CONVERSION
     MOVWF   COUNT2
     LOOP2:
     MOVLW   0x02	;
@@ -122,59 +121,98 @@ START:
     DECFSZ  COUNT2	;+1(2)
     GOTO    LOOP2	;+2
     BCF	PORTC,0
+    CLRF    PCL_ADD
     RETFIE
     
+    
+    CONVERSION:
+    BTFSC   ADRESH_SAVE,7
+    CALL    BIT7
+    BTFSC   ADRESH_SAVE,6
+    CALL    BIT6
+    BTFSC   ADRESH_SAVE,5
+    CAll    BIT5
+    BTFSC   ADRESH_SAVE,4
+    CALL    BIT4
+    BTFSC   ADRESH_SAVE,3
+    CALL    BIT3
+    GOTO    LOOKUP
+    
+    BIT7:
+    MOVLW   32
+    ADDWF   PCL_ADD
+    RETURN
+    BIT6:
+    MOVLW   16
+    ADDWF   PCL_ADD
+    RETURN
+    BIT5:
+    MOVLW   8
+    ADDWF   PCL_ADD
+    RETURN
+    BIT4:
+    MOVLW   4
+    ADDWF   PCL_ADD
+    RETURN
+    BIT3:
+    MOVLW   2
+    ADDWF   PCL_ADD
+    RETURN
+    
     LOOKUP:
-//    BTFSC
-//    MOVLW   55
-//    BTFSC
-//    MOVLW   63
-//    BTFSC
-//    MOVLW   71
-//    BTFSC
-//    MOVLW   79
-//    BTFSC
-//    MOVLW   87
-//    BTFSC
-//    MOVLW   95
-//    BTFSC
-//    MOVLW   103
-//    BTFSC
-//    MOVLW   111
-//    BTFSC
-//    MOVLW   119
-//    BTFSC
-//    MOVLW   127
-//    BTFSC
-//    MOVLW   135
-//    BTFSC
-//    MOVLW   143
-//    BTFSC
-//    MOVLW   151
-//    BTFSC
-//    MOVLW   159
-//    BTFSC
-//    MOVLW   167
-//    BTFSC
-//    MOVLW   175
-//    BTFSC
-//    MOVLW   183
-//    BTFSC
-//    MOVLW   191
-//    BTFSC
-//    MOVLW   199
-//    BTFSC
-//    MOVLW   207
-//    BTFSC
-//    MOVLW   215
-//    BTFSC
-//    MOVLW   223
-//    BTFSC
-//    MOVLW   231
-//    BTFSC
-//    MOVLW   239
-//    BTFSC
-//    MOVLW   247
+    MOVF    PCL_ADD,0
+    ADDWF   PCL,1
+    MOVLW   55
+    RETURN
+    MOVLW   63
+    RETURN
+    MOVLW   71
+    RETURN
+    MOVLW   79
+    RETURN
+    MOVLW   87
+    RETURN
+    MOVLW   95
+    RETURN
+    MOVLW   103
+    RETURN
+    MOVLW   111
+    RETURN
+    MOVLW   119
+    RETURN
+    MOVLW   127
+    RETURN
+    MOVLW   135
+    RETURN
+    MOVLW   143
+    RETURN
+    MOVLW   151
+    RETURN
+    MOVLW   159
+    RETURN
+    MOVLW   167
+    RETURN
+    MOVLW   175
+    RETURN
+    MOVLW   183
+    RETURN
+    MOVLW   191
+    RETURN
+    MOVLW   199
+    RETURN
+    MOVLW   207
+    RETURN
+    MOVLW   215
+    RETURN
+    MOVLW   223
+    RETURN
+    MOVLW   225
+    RETURN
+    MOVLW   227
+    RETURN
+    MOVLW   229
+    RETURN
+    MOVLW   231
     RETURN
     
     
