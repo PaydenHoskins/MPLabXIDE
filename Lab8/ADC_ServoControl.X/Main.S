@@ -164,57 +164,61 @@ START:
     ADDWF   PCL,1
     MOVLW   55
     RETURN
-    MOVLW   63
+    MOVLW   62
     RETURN
-    MOVLW   71
+    MOVLW   69
     RETURN
-    MOVLW   79
+    MOVLW   76
     RETURN
-    MOVLW   87
+    MOVLW   83
     RETURN
-    MOVLW   95
+    MOVLW   90
     RETURN
-    MOVLW   103
+    MOVLW   97
+    RETURN
+    MOVLW   104
     RETURN
     MOVLW   111
     RETURN
-    MOVLW   119
+    MOVLW   118
     RETURN
-    MOVLW   127
+    MOVLW   125
     RETURN
-    MOVLW   135
+    MOVLW   132
     RETURN
-    MOVLW   143
+    MOVLW   139
     RETURN
-    MOVLW   151
+    MOVLW   146
     RETURN
-    MOVLW   159
+    MOVLW   153
+    RETURN
+    MOVLW   160
     RETURN
     MOVLW   167
     RETURN
-    MOVLW   175
+    MOVLW   174
     RETURN
-    MOVLW   183
+    MOVLW   181
     RETURN
-    MOVLW   191
+    MOVLW   188
     RETURN
-    MOVLW   199
+    MOVLW   195
     RETURN
-    MOVLW   207
+    MOVLW   205
     RETURN
-    MOVLW   215
+    MOVLW   211
     RETURN
-    MOVLW   223
+    MOVLW   217
     RETURN
-    MOVLW   225
+    MOVLW   222
     RETURN
-    MOVLW   227
+    MOVLW   228
     RETURN
-    MOVLW   229
+    MOVLW   228
     RETURN
-    MOVLW   231
+    MOVLW   228
     RETURN
-    
-    
+    MOVLW   228
+    RETURN
     END
     
