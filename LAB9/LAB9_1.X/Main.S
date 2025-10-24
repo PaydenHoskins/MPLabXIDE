@@ -28,8 +28,14 @@
 ;Code Section
 ;-------------------------------------------------------------------------------
 ;Register/Variable setup
-    SAVE_RX EQU	0x20
- 
+    SAVE_RX EQU	0x28
+    PW_STATUS	EQU 0x21
+    PS_STATUS	EQU 0x22
+    PERIOD	EQU 0x23
+    SKIP	EQU 0x24
+    PW  EQU	0x25
+    PS  EQU	0x26
+    RX_STATUS  EQU   0x27
  
     ;Start of Program
     PSECT resetVect,class=CODE,delta=2
@@ -43,8 +49,19 @@
  
     ;PORT SETUP
 START:
+    BCF	STATUS,5
+    BCF	STATUS,6
+    MOVLW   0x00
+    MOVWF   SKIP
+    MOVWF   PW_STATUS
+    MOVWF   PS_STATUS
+    MOVLW   200
+    MOVWF   PERIOD
     ;BANK1
     BSF	STATUS,5
+    ;Set timer rollover
+    MOVLW   100
+    MOVWF   PR2
     ;Setup transmit
     MOVLW   0x2E
     MOVWF   TXSTA
@@ -54,7 +71,7 @@ START:
     ;CLR TRISB
     CLRF    TRISB
     ;Enable Specific int flags
-    MOVLW   0x20
+    MOVLW   0x22
     MOVWF   PIE1
     MOVLW   25
     MOVWF   SPBRGH
@@ -74,6 +91,10 @@ START:
     ;BANK0
     BCF	STATUS,5
     BCF	STATUS,6
+    ;Turn on T2
+    MOVLW   0x04
+    MOVWF   T2CON
+    ;BSF	   T2CON,2
     ;Setup Recive
     MOVLW   0x90
     MOVWF   RCSTA
@@ -85,27 +106,169 @@ START:
     CLRF    PIR1
     MOVLW   0xC0
     MOVWF   INTCON
-    
-    
+    BCF	    STATUS,2
     GOTO    MAIN
     
     
     MAIN:
     MOVF    SAVE_RX,0
-    MOVWF   PORTB
- 
+    ;MOVWF   PORTB
     GOTO    MAIN
+       
     
-    INTERRUPT:
-    BSF	    STATUS,5
-    CLRF    PIE1
-    BCF	    STATUS,5
-    MOVF    RCREG,0
-    MOVWF   SAVE_RX
-    MOVWF   TXREG
-    BSF	    STATUS,5
-    BSF     PIE1,5
-    BCF	    STATUS,5
+    TRANSMIT:
+    BSF	    RX_STATUS,0
+    MOVLW   36
+    MOVWF   TXREG 
     CLRF    PIR1
     RETFIE
     
+    
+    INTERRUPT: 
+    BTFSC   PIR1,5
+    GOTO    INTERRUPT_RECIVE
+    BTFSC   PIR1,1
+    GOTO    INTERRUPT_TIMER
+    
+    
+    INTERRUPT_RECIVE:
+    MOVF    RCREG,0
+    MOVWF   SAVE_RX
+    MOVF    SAVE_RX,0
+    XORLW   36
+    BTFSC   STATUS,2
+    GOTO    TRANSMIT
+    BTFSS   STATUS,2
+    GOTO    SERVO
+    CLRF    PIR1
+    RETFIE
+    
+    SERVO:
+    MOVLW   0
+    BTFSS   RX_STATUS,0
+    MOVLW   15
+    ADDWF   PCL,1
+    CLRF    SKIP
+    MOVF    SAVE_RX,0
+    MOVWF   PORTB
+    BTFSC   SAVE_RX,0
+    CALL    BIT0
+    BTFSC   SAVE_RX,1
+    CALL    BIT1
+    BTFSC   SAVE_RX,2
+    CALL    BIT2
+    BTFSC   SAVE_RX,3
+    CALL    BIT3
+    BTFSC   SAVE_RX,4
+    CALL    BIT4 
+    BCF	    RX_STATUS,0
+    CLRF    PIR1
+    CLRF    PIR1
+    RETFIE
+    
+    INTERRUPT_TIMER:
+    CLRF    PIR1
+    BTFSC   PW_STATUS,0
+    GOTO    PW_DEC
+    BTFSC   PS_STATUS,0
+    GOTO    PS_DEC
+    
+    MOVF    SKIP,0
+    ADDWF   PCL,1
+    
+    MOVLW   5
+    GOTO    MATH
+    MOVLW   6
+    GOTO    MATH
+    MOVLW   7
+    GOTO    MATH
+    MOVLW   8
+    GOTO    MATH
+    MOVLW   9
+    GOTO    MATH
+    MOVLW   10
+    GOTO    MATH
+    MOVLW   11
+    GOTO    MATH
+    MOVLW   12
+    GOTO    MATH
+    MOVLW   13
+    GOTO    MATH
+    MOVLW   14
+    GOTO    MATH
+    MOVLW   15
+    GOTO    MATH
+    MOVLW   16
+    GOTO    MATH
+    MOVLW   17
+    GOTO    MATH
+    MOVLW   18
+    GOTO    MATH
+    MOVLW   19
+    GOTO    MATH
+    MOVLW   20
+    GOTO    MATH
+    MOVLW   21
+    GOTO    MATH
+    MOVLW   22
+    GOTO    MATH
+    MOVLW   23
+    GOTO    MATH
+    MOVLW   24
+    GOTO    MATH
+    MOVLW   25
+    GOTO    MATH
+//    
+//    
+    PS_DEC:
+    CLRF    PIR1
+    BSF	    PS_STATUS,0
+    BCF	    PORTA,1
+    DECFSZ  PS,1
+    RETFIE
+    BCF	    PORTA,1
+    BCF	    PS_STATUS,0
+    RETFIE
+    
+    
+    PW_DEC:
+    CLRF    PIR1
+    BSF	    PW_STATUS,0
+    BSF	    PORTA,1
+    DECFSZ  PW,1
+    RETFIE
+    BSF	    PORTA,1
+    BCF	    PW_STATUS,0
+    BSF	    PS_STATUS,0
+    GOTO    PS_DEC
+//    
+//    
+    MATH:
+    MOVWF   PW
+    MOVF    PW,0
+    SUBWF   PERIOD,0
+    MOVWF   PS
+//    CLRF    SKIP
+    GOTO    PW_DEC
+//     
+//    
+    BIT0:
+    MOVLW   2
+    ADDWF   SKIP,1
+    RETURN
+    BIT1:
+    MOVLW   4
+    ADDWF   SKIP,1
+    RETURN
+    BIT2:
+    MOVLW   8
+    ADDWF   SKIP,1
+    RETURN
+    BIT3:
+    MOVLW   16
+    ADDWF   SKIP,1
+    RETURN
+    BIT4:
+    MOVLW   32
+    ADDWF   SKIP,1
+    RETURN
