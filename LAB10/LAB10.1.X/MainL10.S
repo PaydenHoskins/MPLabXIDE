@@ -28,7 +28,7 @@
 ;Code Section
 ;-------------------------------------------------------------------------------
 ;Register/Variable setup
-   COUNT1  EQU  0x20
+    COUNT1  EQU  0x20
     COUNT2  EQU	 0x21
     COUNT3  EQU	 0x22
     COUNT4  EQU	 0x23
@@ -41,6 +41,8 @@
     DECCOUNT2	EQU 0x2A
     DECCOUNT3	EQU 0x2B
     ADSAVE	EQU 0x2C
+    COUNT5  EQU	0x2D
+    COUNT10  EQU  0x2E
  
     ;Start of Program
     PSECT resetVect,class=CODE,delta=2
@@ -84,7 +86,7 @@ START:
     BSF	0x03,6 
     ClRF    ANSELH	;Set input to Digital
     CLRF    ANSEL	;Sets inputs to digital
-    MOVLW   0xF0	;LSB are outputs
+    MOVLW   0xFF	;LSB are outputs
     MOVWF   TRISB	;Set Pins to Inputs
     CLRF    OPTION_REG
     BSF	    OPTION_REG,7
@@ -102,12 +104,15 @@ START:
     BCF	0x03,5
     BCF	0x03,6
     CLRF    CCP1CON
+    CLRF    PORTB
+    MOVLW   0x0F
+    MOVWF   PORTB
     ;PORTA
     ;BANK1
     BSF	0x03,5
     BCF	0x03,6
-    CLRF    TRISA
-    MOVLW   0x01
+    MOVLW   0x1F
+    MOVWF   TRISA
     ;BANK0
     BCF	0x03,5
     BCF	0x03,6
@@ -155,7 +160,7 @@ START:
     BCF	    EECON1,7
     BSF	    EECON1,0
     BCF	    STATUS,5
-    MOVF    0x0C,0
+    MOVF    EEDATA,0
     BSF	    STATUS,5
     BSF	    STATUS,6
     BSF	    EECON1,7
@@ -216,70 +221,94 @@ START:
     BCF	STATUS,5
     BCF	STATUS,6
     ;ROW1
+    BSF	STATUS,5
+    MOVLW   0xF7
+    MOVWF   TRISB
+    BCF	STATUS,5
     MOVLW   0x08    ;+1
     MOVWF   PORTB   ;+1
+    CALL    SOMETIME
+    
     MOVLW   0
     BTFSC   PORTA,1
-    GOTO    DOSTUFF
+    GOTO    SELECT
     MOVLW   2
     BTFSC   PORTA,2
-    GOTO    DOSTUFF
+    GOTO    SELECT
     MOVLW   4
     BTFSC   PORTA,3
-    GOTO    DOSTUFF
+    GOTO    SELECT
     MOVLW   6
     BTFSC   PORTA,4
-    GOTO    DOSTUFF 
+    GOTO    SELECT 
     ;ROW2
+    BSF	STATUS,5
+    MOVLW   0xFB
+    MOVWF   TRISB
+    BCF	STATUS,5
     MOVLW   0x04
     MOVWF   PORTB
+    CALL    SOMETIME
+    
     MOVLW   8
     BTFSC   PORTA,1
-    GOTO    DOSTUFF
+    GOTO    SELECT
     MOVLW   10
     BTFSC   PORTA,2
-    GOTO    DOSTUFF
+    GOTO    SELECT
     MOVLW   12
     BTFSC   PORTA,3
-    GOTO    DOSTUFF
+    GOTO    SELECT
     MOVLW   14
     BTFSC   PORTA,4
-    GOTO    DOSTUFF
+    GOTO    SELECT
     ;ROW3
+    BSF	STATUS,5
+    MOVLW   0xFD
+    MOVWF   TRISB
+    BCF	STATUS,5
     MOVLW   0x02
     MOVWF   PORTB
+    CALL    SOMETIME
+    
     MOVLW   16
     BTFSC   PORTA,1
-    GOTO    DOSTUFF
+    GOTO    SELECT
     MOVLW   18
     BTFSC   PORTA,2
-    GOTO    DOSTUFF
+    GOTO    SELECT
     MOVLW   20
     BTFSC   PORTA,3
-    GOTO    DOSTUFF
+    GOTO    SELECT
     MOVLW   22
     BTFSC   PORTA,4
-    GOTO    DOSTUFF
+    GOTO    SELECT
     ;ROW4
+    BSF	STATUS,5
+    MOVLW   0xFE
+    MOVWF   TRISB
+    BCF	STATUS,5
     MOVLW   0x01
     MOVWF   PORTB
+    CALL    SOMETIME
+    
     MOVLW   24    ;+1
     BTFSC   PORTA,1
-    GOTO    DOSTUFF ;+2
+    GOTO    SELECT ;+2
     MOVLW   26
     BTFSC   PORTA,2
-    GOTO    DOSTUFF
+    GOTO    SELECT
     MOVLW   28
     BTFSC   PORTA,3
-    GOTO    DOSTUFF
+    GOTO    SELECT
     MOVLW   30
     BTFSC   PORTA,4
-    CALL    DOSTUFF
-    CLRF    PORTB
+    CALL    SELECT
     RETURN
     
     
-DOSTUFF:
+SELECT:
+   CLRF    PORTC
    ADDWF    PCL,1
 ;NOTE16
     MOVLW   0x31   ;27	  
@@ -341,7 +370,7 @@ DOSTUFF:
     MOVF    COUNT3,0 ;moves number pressed to data
     BCF	    STATUS,5
     BSF	    STATUS,6
-    MOVWF   0x0C ;Move button press to EEPREOM
+    MOVWF   EEDATA ;Move button press to EEPREOM
     BSF	    STATUS,5
     BSF	    STATUS,6
     MOVLW   0x04
@@ -368,6 +397,9 @@ DOSTUFF:
     BCF	    STATUS,6    
     
     INCF    ADSAVE
+    CALL    DELAY
+    MOVLW   0X00
+    MOVWF   PORTC
     RETURN
     
     DELAY:
@@ -396,4 +428,19 @@ DOSTUFF:
     FUDGE:
     DECFSZ	COUNT4	;+1(2)
     GOTO	FUDGE
+    RETURN
+    
+    
+    SOMETIME:
+    MOVLW	0	;32
+    MOVWF	COUNT10
+    LOOP10:
+    DECFSZ	COUNT10	;+1(2)
+    GOTO	LOOP10	;+2
+    
+    MOVLW	0x0	;1	
+    MOVWF	COUNT5
+    FUDGE1:
+    DECFSZ	COUNT5	;+1(2)
+    GOTO	FUDGE1
     RETURN
