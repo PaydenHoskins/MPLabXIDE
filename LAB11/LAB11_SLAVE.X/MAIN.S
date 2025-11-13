@@ -28,7 +28,7 @@
 ;Code Section
 ;-------------------------------------------------------------------------------
 ;Register/Variable setup
- 
+ BUF_SAVE   EQU	0X20
 ;Start of Program
 PSECT resetVect,class=CODE,delta=2
 GOTO START
@@ -39,70 +39,86 @@ PSECT code,class=CODE,delta=2
 ;Setup code that runs once at power up/ reset
  
 ;PIC SETUP
+;<editor-fold defaultstate="collapsed" desc="STARTUP CODE.">
 START:
-;BANK1
-BSF STATUS,5
-BCF STATUS,6
-;SSPCON2&SSPSTAT
-MOVLW	0x80
-MOVWF	SSPCON2
-MOVLW	0x84
-MOVWF	SSPSTAT
-MOVLW	0x40
-MOVWF	SSPADD
-;TRIS SETS
-CLRF	TRISA
-CLRF	TRISB
-MOVLW	0X00
-MOVWF	TRISB
-CLRF	TRISC
-MOVLW	0x18
-MOVWF	TRISC
-;PIE SETUP
-MOVLW	0x08
-MOVWF	PIE1
-MOVLW	0x08
-MOVWF	PIE2
-;PCON
-CLRF	PCON
-;WPUB
-CLRF	WPUB
-;IOCB
-CLRF	IOCB
-;BAUD RATE
-MOVLW   25
-MOVWF   SPBRGH
-MOVWF   SPBRG
-;BANK2
-BCF STATUS,5
-BSF STATUS,6
+; Bank1
+    BSF STATUS,5
+    BCF STATUS,6
+    MOVLW 0X01
+    MOVWF SSPCON2
+    
+    MOVLW 0x80
+    MOVWF SSPSTAT
 
-;BANK3
-BSF STATUS,5
-CLRF	ANSEL
-CLRF	ANSELH
-;Set up baud rate
-MOVLW   0x01
-MOVWF   BAUDCTL
-;BANK0
-BCF STATUS,5
-BCF STATUS,6
-;MCCP
-MOVLW	0x36
-MOVWF	SSPCON
-;PORT'S
-CLRF	PORTA
-CLRF	PORTB
-CLRF	PORTC
-;TIMER'S1&2
-CLRF	T1CON
-CLRF	T2CON
-;INTCON
-CLRF	INTCON
-GOTO	MAIN
+    ; Slave address = 0x20 ? SSPADD = 0x40
+    MOVLW 0x40
+    MOVWF SSPADD
+
+    ; TRIS: RC3=SCL, RC4=SDA inputs
+    CLRF TRISA
+    CLRF TRISB
+    MOVLW 0x18
+    MOVWF TRISC
+
+    ; Disable analog
+    BSF STATUS,5
+    CLRF ANSEL
+    CLRF ANSELH
+    
+    CLRF    OPTION_REG
+    
+    CLRF PIE1
+    CLRF PIE2
+
+    ; Bank0
+    BCF STATUS,5
+    BCF STATUS,6
+
+    ; SSPCON: I2C Slave mode, 7-bit address, SSPEN=1
+    MOVLW 0x36
+    MOVWF SSPCON
+
+    CLRF PORTA
+    CLRF PORTB
+    CLRF PORTC
+
+    CLRF INTCON
+    CLRF PIR1
+    CLRF PIR2
+
+    GOTO MAIN;</editor-fold>
+
     
     
 MAIN:
-BCF SSPCON,6
-BCF SSPCON,7
-GOTO	MAIN
+    BTFSC PIR1,3          ; SSPIF set?
+    CALL RECEIVED
+    GOTO MAIN
+    
+RECEIVED:
+    ; Check D_A bit (SSPSTAT<5>): 0=Address, 1=Data
+    BSF STATUS,5          ; Bank1
+    BTFSS SSPSTAT,5
+    GOTO ADDRESS_PHASE
+    GOTO DATA_PHASE
+
+ADDRESS_PHASE:
+    BCF STATUS,5          ; Bank0
+    BCF SSPCON,4 
+    MOVF SSPBUF,0         ; dummy read clears BF
+    BCF SSPCON,6          ; clear SSPOV
+    BSF SSPCON,4          ; CKP=1 release clock
+    BCF PIR1,3            ; clear SSPIF
+    RETURN
+
+DATA_PHASE:
+    BCF STATUS,5         ; Bank0
+    BCF SSPCON,4 
+    MOVF SSPBUF,0         ; read byte, clears BF
+    MOVWF BUF_SAVE
+    MOVWF PORTB
+    BCF SSPCON,6          ; clear SSPOV
+    BSF SSPCON,4          ; CKP=1 release clock (ACK)
+    BCF PIR1,3            ; clear SSPIF
+    RETURN
+    
