@@ -195,8 +195,6 @@ START:
     MOVLW   15
     ADDWF   PCL,1
     CLRF    SKIP
-   ; MOVF    SAVE_RX,0
-    ;MOVWF   PORTB
     BTFSC   SAVE_RX,0
     CALL    BIT0
     BTFSC   SAVE_RX,1
@@ -298,7 +296,6 @@ START:
     MOVF    PW,0
     SUBWF   PERIOD,0
     MOVWF   PS
-//    CLRF    SKIP
     GOTO    PW_DEC
 //     
 //    
