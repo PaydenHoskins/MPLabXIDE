@@ -28,17 +28,10 @@
 ;Code Section
 ;-------------------------------------------------------------------------------
 ;Register/Variable setup
- BUF_SAVE   EQU	0X20
- POT1	EQU 0X21
- POT2	EQU 0X22
- POT3	EQU 0X23
- PCL_ADD1   EQU	0X24
- PCL_ADD2   EQU	0X25
- PCL_ADD3   EQU	0X26
- COUNT1 EQU 0x27
- COUNT2 EQU 0x28
- COUNT3	EQU 0X29
- COUNT4	EQU 0X2A
+BUF_SAVE   EQU	0X20
+COUNT	EQU 0X21
+P1_SAVE	EQU 0X22
+PCL_ADD	EQU 0X23
 ;Start of Program
 PSECT resetVect,class=CODE,delta=2
 GOTO START
@@ -59,7 +52,11 @@ START:
     
     MOVLW 0x80
     MOVWF SSPSTAT
-
+    
+    ;PR2
+    MOVLW   100
+    MOVWF   PR2
+    
     ; Slave address = 0x20 ? SSPADD = 0x40
     MOVLW 0x40
     MOVWF SSPADD
@@ -69,18 +66,18 @@ START:
     CLRF TRISB
     MOVLW 0x18
     MOVWF TRISC
-
+    CLRF    OPTION_REG
+    
+    MOVLW   0X0A
+    MOVWF   PIE1
+    CLRF PIE2
+    
+    ;BANK3
+    BSF STATUS,6
     ; Disable analog
-    BSF STATUS,5
     CLRF ANSEL
     CLRF ANSELH
     
-    CLRF    OPTION_REG
-    
-    MOVLW   0X02
-    MOVWF   PIE1
-    CLRF PIE2
-
     ; Bank0
     BCF STATUS,5
     BCF STATUS,6
@@ -93,8 +90,12 @@ START:
     CLRF PORTB
     CLRF PORTC
     
+    ;EQU
+    MOVLW   200
+    MOVWF   COUNT
+    
     ;TIMER2
-    MOVLW   0X26
+    MOVLW   0X04
     MOVWF   T2CON
     
     ;INTERRUPTS
@@ -104,264 +105,208 @@ START:
     MOVWF INTCON
     
     GOTO MAIN;</editor-fold>
-
-    
     
 MAIN:
-    BTFSC   PIR1,3
-    CALL    SERVOSTUFF
-    BSF	INTCON,7
-    GOTO MAIN
+    NOP
+    GOTO    MAIN
     
 INTERRUPT:
     BTFSC   PIR1,1
-    CALL    TIMER
+    GOTO CHECK200
+    BTFSC   PIR1,3
+    GOTO RECEIVED
     RETFIE
     
-TIMER:
-    CALL    DEC1
-    CALL    DEC2
-    CALL    DEC3
+ENDINT:
+    
     RETFIE
-   
+     
+CHECK200:  
+    MOVLW   0XC8
+    XORWF   COUNT,0
+    BTFSC   STATUS,2
+    GOTO    SETPORT
+    GOTO    CHECKMATCH
     
-SERVOSTUFF:
-    BCF	INTCON,7
-    CALL RECEIVED
-    BTFSS   PIR1,3
-    GOTO    $-1
-    CALL RECEIVED
-    CALL RECEIVED
-    BTFSC   BUF_SAVE,5
-    CALL   POT1SETUP
-    BTFSC   BUF_SAVE,6
-    CALL   POT2SETUP
-    BTFSC   BUF_SAVE,7
-    CALL   POT3SETUP
-    RETURN
+CHECKMATCH:
+    MOVF    P1_SAVE,0
+    XORWF   COUNT,0
+    BTFSC   STATUS,2
+    GOTO PWM1CLR
+    DECFSZ  COUNT,1
+    GOTO    ENDPWM
+    GOTO RESETCOUNT
     
-//<editor-fold defaultstate="collapsed" desc="I2C">
+ENDPWM:
+    BCF	PORTB,2
+    BCF    PIR1,1
+    GOTO    ENDINT
+    
+SETPORT:    
+    BSF	PORTB,1
+    GOTO    CHECKMATCH
+
+PWM1CLR:
+    BSF	PORTB,2
+    BCF	PORTB,1
+    BCF    PIR1,1
+    GOTO    ENDINT
+
+RESETCOUNT:
+    MOVLW   200
+    ADDWF   COUNT
+    BCF    PIR1,1
+    GOTO    ENDINT
+    
 RECEIVED:
-    ; Check D_A bit (SSPSTAT<5>): 0=Address, 1=Data
+    ;Check D_A bit (SSPSTAT<5>): 0=Address, 1=Data
     BSF STATUS,5          ; Bank1
     BTFSS SSPSTAT,5
     GOTO ADDRESS_PHASE
     GOTO DATA_PHASE
 
 ADDRESS_PHASE:
-    BCF STATUS,5          ; Bank0
-    BCF SSPCON,4 
+    BCF STATUS,5    ; Bank0
+    BCF SSPCON,4
     MOVF SSPBUF,0         ; dummy read clears BF
     BCF SSPCON,6          ; clear SSPOV
     BSF SSPCON,4          ; CKP=1 release clock
     BCF PIR1,3            ; clear SSPIF
-    RETURN
+    GOTO    ENDINT
 
 DATA_PHASE:
     BCF STATUS,5         ; Bank0
     BCF SSPCON,4 
     MOVF SSPBUF,0         ; read byte, clears BF
     MOVWF BUF_SAVE
+    BTFSC BUF_SAVE,7 
+    GOTO    P1
+    BTFSC BUF_SAVE,6
+    GOTO    P2
+    BTFSC BUF_SAVE,5
+    GOTO    P3
     BCF SSPCON,6          ; clear SSPOV
     BSF SSPCON,4          ; CKP=1 release clock (ACK)
     BCF PIR1,3            ; clear SSPIF
-    MOVF    BUF_SAVE,0
-    RETURN//</editor-fold>
- 
-//<editor-fold defaultstate="collapsed" desc="POT1">
-POT1SETUP:
-    MOVWF   POT1
-    BTFSC   POT1,4
-    CALL    BIT4
-    ADDWF   PCL_ADD1
-    BTFSC   POT1,3
-    CALL    BIT3
-    ADDWF   PCL_ADD1
-    BTFSC   POT1,3
-    CAll    BIT2
-    ADDWF   PCL_ADD1
-    BTFSC   POT1,1
-    CALL    BIT1
-    ADDWF   PCL_ADD1
-    BTFSC   POT1,0
-    CALL    BIT0
-    ADDWF   PCL_ADD1
-    MOVF    PCL_ADD3,0
-    CALL    LOOKUP
-    MOVWF   COUNT2
-    RETURN
-    //</editor-fold>
+    GOTO    ENDINT
     
-//<editor-fold defaultstate="collapsed" desc="POT2">
-POT2SETUP:
-    MOVWF   POT2
-    BTFSC   POT2,4
-    CALL    BIT4
-    ADDWF   PCL_ADD2
-    BTFSC   POT2,3
-    CALL    BIT3
-    ADDWF   PCL_ADD2
-    BTFSC   POT2,3
-    CAll    BIT2
-    ADDWF   PCL_ADD2
-    BTFSC   POT2,1
-    CALL    BIT1
-    ADDWF   PCL_ADD2
-    BTFSC   POT2,0
-    CALL    BIT0
-    ADDWF   PCL_ADD2
-    MOVF    PCL_ADD2,0
-    CALL    LOOKUP
-    MOVWF   COUNT3
-    RETURN
-    //</editor-fold>    
-    
-//<editor-fold defaultstate="collapsed" desc="POT3">
-POT3SETUP:
-    MOVWF   POT3
-    BTFSC   POT3,4
-    CALL    BIT4
-    ADDWF   PCL_ADD3
-    BTFSC   POT3,3
-    CALL    BIT3
-    ADDWF   PCL_ADD3
-    BTFSC   POT3,3
-    CAll    BIT2
-    ADDWF   PCL_ADD3
-    BTFSC   POT3,1
-    CALL    BIT1
-    ADDWF   PCL_ADD3
-    BTFSC   POT3,0
-    CALL    BIT0
-    ADDWF   PCL_ADD3
-    MOVF    PCL_ADD3,0
-    CALL    LOOKUP
-    MOVWF   COUNT4
-    RETURN
-    //</editor-fold>
-  
+P1:
+   BTFSC BUF_SAVE,4
+   CALL	BIT4
+   BTFSC BUF_SAVE,3
+   CALL	BIT3
+   BTFSC BUF_SAVE,2
+   CALL	BIT2
+   BTFSC BUF_SAVE,1
+   CALL	BIT1
+   BTFSC BUF_SAVE,0
+   CALL	BIT0
+   CALL	LOOKUP
+   MOVWF    P1_SAVE
+   CLRF	PCL_ADD
+   BCF SSPCON,6          ; clear SSPOV
+    BSF SSPCON,4          ; CKP=1 release clock (ACK)
+    BCF PIR1,3
+   GOTO    ENDINT
+P2:          
+    BCF SSPCON,6          ; clear SSPOV
+    BSF SSPCON,4          ; CKP=1 release clock (ACK)
+    BCF PIR1,3
+    GOTO    ENDINT
+P3:
+    BCF SSPCON,6          ; clear SSPOV
+    BSF SSPCON,4          ; CKP=1 release clock (ACK)
+    BCF PIR1,3
+    GOTO    ENDINT
 //<editor-fold defaultstate="collapsed" desc="WEIGHT">
 BIT4:
     MOVLW   32
+    ADDWF   PCL_ADD
     RETURN
 BIT3:
     MOVLW   16
+    ADDWF   PCL_ADD
     RETURN
 BIT2:
     MOVLW   8
+    ADDWF   PCL_ADD
     RETURN
 BIT1:
     MOVLW   4
+    ADDWF   PCL_ADD
     RETURN
 BIT0:
     MOVLW   2
-    RETURN//</editor-fold>
-
+    ADDWF   PCL_ADD
+    RETURN   //</editor-fold>
+ 
 //<editor-fold defaultstate="collapsed" desc="LOOKUP">
 LOOKUP:
+    MOVF    PCL_ADD,0
     ADDWF   PCL,1
-    MOVLW   55
-    RETURN
-    MOVLW   62
-    RETURN
-    MOVLW   69
-    RETURN
-    MOVLW   76
-    RETURN
-    MOVLW   83
-    RETURN
-    MOVLW   90
-    RETURN
-    MOVLW   97
-    RETURN
-    MOVLW   104
-    RETURN
-    MOVLW   111
-    RETURN
-    MOVLW   118
-    RETURN
-    MOVLW   125
-    RETURN
-    MOVLW   132
-    RETURN
-    MOVLW   139
-    RETURN
-    MOVLW   146
-    RETURN
-    MOVLW   153
-    RETURN
-    MOVLW   160
-    RETURN
-    MOVLW   167
-    RETURN
-    MOVLW   174
-    RETURN
-    MOVLW   181
-    RETURN
-    MOVLW   188
+    MOVLW   195
     RETURN
     MOVLW   195
     RETURN
-    MOVLW   205
+    MOVLW   194
     RETURN
-    MOVLW   211
+    MOVLW   194
     RETURN
-    MOVLW   217
+    MOVLW   193
     RETURN
-    MOVLW   222
+    MOVLW   192
     RETURN
-    MOVLW   228
+    MOVLW   191
     RETURN
-    MOVLW   228
+    MOVLW   190
     RETURN
-    MOVLW   228
+    MOVLW   189
     RETURN
-    MOVLW   228
+    MOVLW   188
+    RETURN
+    MOVLW   187
+    RETURN
+    MOVLW   186
+    RETURN
+    MOVLW   185
+    RETURN
+    MOVLW   184
+    RETURN
+    MOVLW   183
+    RETURN
+    MOVLW   182
+    RETURN
+    MOVLW   181
+    RETURN
+    MOVLW   180
+    RETURN
+    MOVLW   180
+    RETURN
+    MOVLW   180
+    RETURN
+    MOVLW   179
+    RETURN
+    MOVLW   179
+    RETURN
+    MOVLW   178
+    RETURN
+    MOVLW   178
+    RETURN
+    MOVLW   177
+    RETURN
+    MOVLW   177
+    RETURN
+    MOVLW   176
+    RETURN
+    MOVLW   176
+    RETURN
+    MOVLW   176
+    RETURN
+    MOVLW   175
+    RETURN
+    MOVLW   175
+    RETURN
+    MOVLW   175
     RETURN//</editor-fold>
-  
-    DEC1:
-    MOVWF   COUNT2
-    BSF	PORTB,0
-    LOOP2:
-    MOVLW   0x02	;
-    MOVWF   COUNT1
-    LOOP1:
-    DECFSZ  COUNT1	;+1(2)
-    GOTO    LOOP1	;+2
-    DECFSZ  COUNT2	;+1(2)
-    GOTO    LOOP2	;+2
-    BCF	PORTB,0
-    CLRF    PCL_ADD1
-    RETURN
-    
-    DEC2:
-    MOVWF   COUNT3
-    BSF	PORTB,1
-    LOOP4:
-    MOVLW   0x02	;
-    MOVWF   COUNT1
-    LOOP3:
-    DECFSZ  COUNT1	;+1(2)
-    GOTO    LOOP3	;+2
-    DECFSZ  COUNT3	;+1(2)
-    GOTO    LOOP4	;+2
-    BCF	PORTB,1
-    CLRF    PCL_ADD2
-    RETURN
-    
-    DEC3:
-    MOVWF   COUNT4
-    BSF	PORTB,2
-    LOOP6:
-    MOVLW   0x02	;
-    MOVWF   COUNT1
-    LOOP5:
-    DECFSZ  COUNT1	;+1(2)
-    GOTO    LOOP5	;+2
-    DECFSZ  COUNT4	;+1(2)
-    GOTO    LOOP6	;+2
-    BCF	PORTB,2
-    CLRF    PCL_ADD3
-    RETURN
-    
-    END
+
+END
