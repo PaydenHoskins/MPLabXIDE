@@ -31,13 +31,16 @@
 BUF_SAVE   EQU	0X20
 COUNT	EQU 0X21
 P1_SAVE	EQU 0X22
-PCL_ADD	EQU 0X23
+P2_SAVE	EQU 0X23
+P3_SAVE	EQU 0X24
+PCL_ADD	EQU 0X25
 ;Start of Program
 PSECT resetVect,class=CODE,delta=2
 GOTO START
     
 PSECT isrVect,class=CODE,delta=2
-GOTO INTERRUPT    
+GOTO	INTERRUPT
+   
 PSECT code,class=CODE,delta=2
 ;Setup code that runs once at power up/ reset
  
@@ -53,6 +56,12 @@ START:
     MOVLW 0x80
     MOVWF SSPSTAT
     
+    ;INTERRUPT ENABLE
+    CLRF PIE1
+    CLRF PIE2
+    BSF	PIE1,3
+    BSF	PIE1,1
+    
     ;PR2
     MOVLW   100
     MOVWF   PR2
@@ -66,17 +75,13 @@ START:
     CLRF TRISB
     MOVLW 0x18
     MOVWF TRISC
-    CLRF    OPTION_REG
-    
-    MOVLW   0X0A
-    MOVWF   PIE1
-    CLRF PIE2
-    
+
     ;BANK3
-    BSF STATUS,6
     ; Disable analog
+    BSF STATUS,6    
     CLRF ANSEL
     CLRF ANSELH
+    CLRF OPTION_REG
     
     ; Bank0
     BCF STATUS,5
@@ -89,107 +94,67 @@ START:
     CLRF PORTA
     CLRF PORTB
     CLRF PORTC
-    
-    ;EQU
-    MOVLW   200
-    MOVWF   COUNT
-    
+
     ;TIMER2
     MOVLW   0X04
     MOVWF   T2CON
     
-    ;INTERRUPTS
+    ;COUNT SET
+    MOVLW   200
+    MOVWF   COUNT
+    
+    ;INTERRRUPTS
+    CLRF INTCON
     CLRF PIR1
     CLRF PIR2
-    MOVLW   0XC0
-    MOVWF INTCON
-    
+    BSF	INTCON,7
+    BSF	INTCON,6
+
     GOTO MAIN;</editor-fold>
+
     
 MAIN:
-    NOP
-    GOTO    MAIN
+   NOP
+   GOTO    MAIN
     
 INTERRUPT:
-    BTFSC   PIR1,1
-    GOTO CHECK200
-    BTFSC   PIR1,3
-    GOTO RECEIVED
-    RETFIE
+   BTFSC   PIR1,1
+   GOTO    PWMCONTROL
+   BTFSC   PIR1,3          ; SSPIF set?
+   GOTO    RECEIVED
     
-ENDINT:
+   RETFIE
     
-    RETFIE
-     
-CHECK200:  
-    MOVLW   0XC8
-    XORWF   COUNT,0
-    BTFSC   STATUS,2
-    GOTO    SETPORT
-    GOTO    CHECKMATCH
-    
-CHECKMATCH:
-    MOVF    P1_SAVE,0
-    XORWF   COUNT,0
-    BTFSC   STATUS,2
-    GOTO PWM1CLR
-    DECFSZ  COUNT,1
-    GOTO    ENDPWM
-    GOTO RESETCOUNT
-    
-ENDPWM:
-    BCF	PORTB,2
-    BCF    PIR1,1
-    GOTO    ENDINT
-    
-SETPORT:    
-    BSF	PORTB,1
-    GOTO    CHECKMATCH
-
-PWM1CLR:
-    BSF	PORTB,2
-    BCF	PORTB,1
-    BCF    PIR1,1
-    GOTO    ENDINT
-
-RESETCOUNT:
-    MOVLW   200
-    ADDWF   COUNT
-    BCF    PIR1,1
-    GOTO    ENDINT
-    
+//<editor-fold defaultstate="collapsed" desc="RECIVING DATA INTERRUPT">
 RECEIVED:
-    ;Check D_A bit (SSPSTAT<5>): 0=Address, 1=Data
-    BSF STATUS,5          ; Bank1
-    BTFSS SSPSTAT,5
-    GOTO ADDRESS_PHASE
-    GOTO DATA_PHASE
+   ; Check D_A bit (SSPSTAT<5>): 0=Address, 1=Data
+   BSF STATUS,5          ; Bank1
+   BTFSS SSPSTAT,5
+   GOTO ADDRESS_PHASE
+   GOTO DATA_PHASE
 
 ADDRESS_PHASE:
-    BCF STATUS,5    ; Bank0
-    BCF SSPCON,4
-    MOVF SSPBUF,0         ; dummy read clears BF
-    BCF SSPCON,6          ; clear SSPOV
-    BSF SSPCON,4          ; CKP=1 release clock
-    BCF PIR1,3            ; clear SSPIF
-    GOTO    ENDINT
+   BCF STATUS,5          ; Bank0
+   BCF SSPCON,4 
+   MOVF SSPBUF,0         ; dummy read clears BF
+   BCF SSPCON,6          ; clear SSPOV
+   BSF SSPCON,4          ; CKP=1 release clock
+   BCF PIR1,3            ; clear SSPIF
+   GOTO    ENDRECIVE
 
 DATA_PHASE:
-    BCF STATUS,5         ; Bank0
-    BCF SSPCON,4 
-    MOVF SSPBUF,0         ; read byte, clears BF
-    MOVWF BUF_SAVE
-    BTFSC BUF_SAVE,7 
-    GOTO    P1
-    BTFSC BUF_SAVE,6
-    GOTO    P2
-    BTFSC BUF_SAVE,5
-    GOTO    P3
-    BCF SSPCON,6          ; clear SSPOV
-    BSF SSPCON,4          ; CKP=1 release clock (ACK)
-    BCF PIR1,3            ; clear SSPIF
-    GOTO    ENDINT
-    
+   BCF STATUS,5         ; Bank0
+   BCF SSPCON,4 
+   MOVF SSPBUF,0         ; read byte, clears BF
+   MOVWF BUF_SAVE
+   BTFSC BUF_SAVE,7 
+   GOTO    P3
+   BTFSC BUF_SAVE,6
+   GOTO    P2
+   BTFSC BUF_SAVE,5
+   GOTO    P1    
+   GOTO    ENDRECIVE
+
 P1:
    BTFSC BUF_SAVE,4
    CALL	BIT4
@@ -204,20 +169,37 @@ P1:
    CALL	LOOKUP
    MOVWF    P1_SAVE
    CLRF	PCL_ADD
-   BCF SSPCON,6          ; clear SSPOV
-    BSF SSPCON,4          ; CKP=1 release clock (ACK)
-    BCF PIR1,3
-   GOTO    ENDINT
-P2:          
-    BCF SSPCON,6          ; clear SSPOV
-    BSF SSPCON,4          ; CKP=1 release clock (ACK)
-    BCF PIR1,3
-    GOTO    ENDINT
+   GOTO	ENDRECIVE
+P2:
+   BTFSC BUF_SAVE,4
+   CALL	BIT4
+   BTFSC BUF_SAVE,3
+   CALL	BIT3
+   BTFSC BUF_SAVE,2
+   CALL	BIT2
+   BTFSC BUF_SAVE,1
+   CALL	BIT1
+   BTFSC BUF_SAVE,0
+   CALL	BIT0
+   CALL	LOOKUP
+   MOVWF    P2_SAVE
+   CLRF	PCL_ADD
+   GOTO	ENDRECIVE
 P3:
-    BCF SSPCON,6          ; clear SSPOV
-    BSF SSPCON,4          ; CKP=1 release clock (ACK)
-    BCF PIR1,3
-    GOTO    ENDINT
+   BTFSC BUF_SAVE,4
+   CALL	BIT4
+   BTFSC BUF_SAVE,3
+   CALL	BIT3
+   BTFSC BUF_SAVE,2
+   CALL	BIT2
+   BTFSC BUF_SAVE,1
+   CALL	BIT1
+   BTFSC BUF_SAVE,0
+   CALL	BIT0
+   CALL	LOOKUP
+   MOVWF    P3_SAVE
+   CLRF	PCL_ADD
+   GOTO	ENDRECIVE
 //<editor-fold defaultstate="collapsed" desc="WEIGHT">
 BIT4:
     MOVLW   32
@@ -308,5 +290,54 @@ LOOKUP:
     RETURN
     MOVLW   175
     RETURN//</editor-fold>
+    
+ENDRECIVE:
+    BCF	STATUS,5
+    BCF	STATUS,6
+    BCF SSPCON,6          ; clear SSPOV
+    BSF SSPCON,4          ; CKP=1 release clock (ACK)
+    BCF PIR1,3            ; clear SSPIF
+    RETFIE
+    //</editor-fold>
+    
+//<editor-fold defaultstate="collapsed" desc="PWM CONTROLLER CODE">
+PWMCONTROL:
+    MOVLW   200
+    XORWF   COUNT,0
+    BTFSC   STATUS,2
+    CALL    SETBITS
+    MOVF    P1_SAVE,0
+    XORWF   COUNT,0
+    BTFSC   STATUS,2
+    BCF	PORTB,0
+    MOVF    P2_SAVE,0
+    XORWF   COUNT,0
+    BTFSC   STATUS,2
+    BCF	PORTB,1
+    MOVF    P3_SAVE,0
+    XORWF   COUNT,0
+    BTFSC   STATUS,2
+    BCF	PORTB,2
+    DECFSZ  COUNT,1
+    GOTO    ENDPWM
+    GOTO    FLIP
+    
+SETBITS:
+    BSF	PORTB,0
+    BSF	PORTB,1
+    BSF	PORTB,2
+    RETURN
+    
+FLIP:
+;    BCF	PORTB,0
+    MOVLW   200
+    MOVWF   COUNT
+    GOTO    ENDPWM
+    
+ENDPWM:
+    BCF	STATUS,5
+    BCF	STATUS,6
+    BCF	PIR1,1
+    RETFIE//</editor-fold>
 
-END
+    END
