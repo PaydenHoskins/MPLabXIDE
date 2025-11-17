@@ -95,7 +95,7 @@ ${OBJECTDIR}/MainL10.o: MainL10.S  nbproject/Makefile-${CND_CONF}.mk
 	${MP_AS} -mcpu=PIC16F883 -c \
 	-o ${OBJECTDIR}/MainL10.o \
 	MainL10.S \
-	 -D__DEBUG=1   -mdfp="${DFP_DIR}/xc8"  -msummary=+mem,-psect,-class,-hex,-file,-sha1,-sha256,-xml,-xmlfull -fmax-errors=20 -mwarn=0 -xassembler-with-cpp -Wl,-presetVect=0h,-pisrVect=04,-pcode=08h
+	 -D__DEBUG=1    -fmax-errors=20 -mwarn=0 -xassembler-with-cpp
 	
 else
 ${OBJECTDIR}/MainL10.o: MainL10.S  nbproject/Makefile-${CND_CONF}.mk 
@@ -104,7 +104,7 @@ ${OBJECTDIR}/MainL10.o: MainL10.S  nbproject/Makefile-${CND_CONF}.mk
 	${MP_AS} -mcpu=PIC16F883 -c \
 	-o ${OBJECTDIR}/MainL10.o \
 	MainL10.S \
-	  -mdfp="${DFP_DIR}/xc8"  -msummary=+mem,-psect,-class,-hex,-file,-sha1,-sha256,-xml,-xmlfull -fmax-errors=20 -mwarn=0 -xassembler-with-cpp -Wl,-presetVect=0h,-pisrVect=04,-pcode=08h
+	   -fmax-errors=20 -mwarn=0 -xassembler-with-cpp
 	
 endif
 
@@ -115,13 +115,13 @@ ${DISTDIR}/LAB10.1.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}: ${OBJECTFILES}  nbproject/M
 	@${MKDIR} ${DISTDIR} 
 	${MP_LD} -mcpu=PIC16F883 ${OBJECTFILES_QUOTED_IF_SPACED} \
 	-o ${DISTDIR}/LAB10.1.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX} \
-	 -D__DEBUG=1   -mdfp="${DFP_DIR}/xc8"  -msummary=+mem,-psect,-class,-hex,-file,-sha1,-sha256,-xml,-xmlfull -mcallgraph=std -Wl,-Map=${FINAL_IMAGE_NAME_MINUS_EXTENSION}.map -mno-download-hex -Wl,-presetVect=0h,-pisrVect=04,-pcode=08h
+	 -D__DEBUG=1    -mcallgraph=std -Wl,-Map=${FINAL_IMAGE_NAME_MINUS_EXTENSION}.map -mno-download-hex
 else
 ${DISTDIR}/LAB10.1.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}: ${OBJECTFILES}  nbproject/Makefile-${CND_CONF}.mk   
 	@${MKDIR} ${DISTDIR} 
 	${MP_LD} -mcpu=PIC16F883 ${OBJECTFILES_QUOTED_IF_SPACED} \
 	-o ${DISTDIR}/LAB10.1.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX} \
-	  -mdfp="${DFP_DIR}/xc8"  -msummary=+mem,-psect,-class,-hex,-file,-sha1,-sha256,-xml,-xmlfull -mcallgraph=std -Wl,-Map=${FINAL_IMAGE_NAME_MINUS_EXTENSION}.map -mno-download-hex -Wl,-presetVect=0h,-pisrVect=04,-pcode=08h
+	   -mcallgraph=std -Wl,-Map=${FINAL_IMAGE_NAME_MINUS_EXTENSION}.map -mno-download-hex
 endif
 
 
