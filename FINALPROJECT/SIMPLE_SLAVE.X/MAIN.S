@@ -51,7 +51,7 @@ START:
     MOVWF SSPSTAT
 
     ; Slave address = 0x20 ? SSPADD = 0x40
-    MOVLW 0xAA
+    MOVLW 0x40
     MOVWF SSPADD
 
     ; TRIS: RC3=SCL, RC4=SDA inputs
@@ -104,7 +104,7 @@ RECEIVED:
 
 ADDRESS_PHASE:
     BCF STATUS,5          ; Bank0
-    BCF SSPCON,4 
+//    BCF SSPCON,4 
     MOVF SSPBUF,0         ; dummy read clears BF
     BCF SSPCON,6          ; clear SSPOV
     BSF SSPCON,4          ; CKP=1 release clock
@@ -113,7 +113,7 @@ ADDRESS_PHASE:
 
 DATA_PHASE:
     BCF STATUS,5         ; Bank0
-    BCF SSPCON,4 
+//    BCF SSPCON,4 
     MOVF SSPBUF,0         ; read byte, clears BF
     MOVWF BUF_SAVE
     MOVWF PORTB
